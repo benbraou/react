@@ -101,8 +101,6 @@ function getFileNameWithIndex(fileName, index) {
  * @param {index} number unique number identifying the eslint run
  */
 function handleEslintOutput(output, index) {
-  // Whether we store lint results in a file or not, we also log the results in the console
-  console.log(output);
   if (!formatterConfig.outputFile) {
     return;
   }
@@ -173,9 +171,10 @@ function runESLint({onlyChanged}) {
     // we create a JUnit file per run and then we merge them into one using npm install junit-merge.
     // Otherwise, naively creating one file that contains the concatenated xml results will not be
     // parsed by circleci
-    handleEslintOutput(output, index);
+    handleEslintOutput(result.output, index);
   });
-  // mergeOutputResults();
+  // Whether we store lint results in a file or not, we also log the results in the console
+  console.log(output);
   return errorCount === 0 && warningCount === 0;
 }
 
