@@ -5,6 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+'use strict';
+
 const {getFormatterConfigFromProcessArgs} = require('../eslint.utils');
 
 describe('getFormatterConfigFromProcessArgs', () => {

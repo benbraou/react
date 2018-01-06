@@ -72,7 +72,7 @@ function getFormatterConfig() {
  * @param {String} directoryStructure The file path
  */
 function createDirectoriesIfMissing(filePath) {
-  var dirname = path.dirname(filePath);
+  const dirname = path.dirname(filePath);
   if (fs.existsSync(dirname)) {
     return;
   }
