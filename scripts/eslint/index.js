@@ -7,54 +7,16 @@
 
 'use strict';
 
-/**
- * @typedef {Object} FormatterConfig
- * @property {String} name
- * @property {String} outputFile
- */
-
 const fs = require('fs');
 const minimatch = require('minimatch');
 const CLIEngine = require('eslint').CLIEngine;
 const listChangedFiles = require('../shared/listChangedFiles');
 const {es5Paths, esNextPaths} = require('../shared/pathsByLanguageVersion');
-
-const DEFAULT_FORMATTER_NAME = 'stylish';
-const FORMATTER_FLAG = '--formatter=';
-const OUTPUT_FLAG = '--output=';
+const {getFormatterConfig, createDirectoriesIfMissing} = require('./eslint.utils');
 
 const allPaths = ['**/*.js'];
 
 let changedFiles = null;
-
-/**
- * Returns the formatter configuration
- *
- * If a formatter name has been provided as a command line argument , it is returned. Otherwise,the
- * default formatter name `stylish` is returned.
- *
- * More information can be found in https://eslint.org/docs/developer-guide/nodejs-api#getformatter
- *
- * If an output file has been provided as a command line argument, it is returned
- *
- * @returns {FormatterConfig} the formatter configuration
- */
-function getFormatterConfig() {
-  let config = {
-    name: DEFAULT_FORMATTER_NAME,
-    outputFile: '',
-  };
-  const args = process.argv;
-  for (let arg of args) {
-    if (arg.startsWith(FORMATTER_FLAG)) {
-      config.name = arg.replace(FORMATTER_FLAG, '');
-    }
-    if (arg.startsWith(OUTPUT_FLAG)) {
-      config.outputFile = arg.replace(OUTPUT_FLAG, '');
-    }
-  }
-  return config;
-}
 
 const formatterConfig = getFormatterConfig();
 
@@ -109,14 +71,14 @@ function intersect(files, patterns) {
 }
 
 /**
- * Based on the formatter configuration, either log the output or write it to a file.
+ * Based on the formatter configuration, log the output in console and write it to a file if
+ * required.
  *
- * Writing the output only to a file, means -in case of circle ci-, that eslint results will only
- * show up in the summary section and not the in the build output. (In case of lint failure, only
- * the message `Lint failed` will be available in the built output)
+ * Writing the output only to a file, means -in case of circle ci-, that eslint results will show up
+ * in the summary section. They will also be shown in the build output.
  *
- * Logging the output only, implies that the eslint result will be printed to console in the chosen
- * format. For example, if the formatter is `junit`, the console will log XML result that is
+ * Logging the output in console, implies that the eslint result will be printed to console in the
+ * chosen format. For example, if the formatter is `junit`, the console will log XML result that is
  * unfortunately not very readable.
  *
  * Future requirements can be implemented here, such as always logging the eslint result using the
@@ -126,12 +88,14 @@ function intersect(files, patterns) {
  * @param {String} output Eslint output result
  */
 function handleEslintOutput(output) {
+  // Whether we store lint results in a file or not, we also log the results in the console
+  console.log(output);
   if (!formatterConfig.outputFile) {
-    console.log(output);
-  } else {
-    console.log(`Writing lint results to: ${formatterConfig.outputFile}`);
-    fs.writeFileSync(formatterConfig.outputFile, output, 'utf8');
+    return;
   }
+  console.log(`Writing lint results to: ${formatterConfig.outputFile}`);
+  createDirectoriesIfMissing(formatterConfig.outputFile);
+  fs.writeFileSync(formatterConfig.outputFile, output, 'utf8');
 }
 
 function runESLint({onlyChanged}) {
