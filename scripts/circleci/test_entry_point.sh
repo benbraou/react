@@ -9,7 +9,7 @@ COMMANDS_TO_RUN=()
 if [ $((0 % CIRCLE_NODE_TOTAL)) -eq "$CIRCLE_NODE_INDEX" ]; then
   COMMANDS_TO_RUN+=('node ./scripts/prettier/index')
   COMMANDS_TO_RUN+=('node ./scripts/tasks/flow')
-  COMMANDS_TO_RUN+=('node ./scripts/tasks/eslint')
+  COMMANDS_TO_RUN+=("node ./scripts/tasks/eslint --formatter=${ESLINT_FORMATTER} --output=${ESLINT_OUTPUT}")
   COMMANDS_TO_RUN+=("yarn test --runInBand --testResultsProcessor=${JEST_PROCESSOR}")
   COMMANDS_TO_RUN+=('./scripts/circleci/check_license.sh')
   COMMANDS_TO_RUN+=('./scripts/circleci/check_modules.sh')

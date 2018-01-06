@@ -37,6 +37,8 @@ jobs:
           environment:
             JEST_JUNIT_OUTPUT: "reports/junit/jest-results.xml"
             JEST_PROCESSOR: "jest-junit"
+            ESLINT_FORMATTER: "junit"
+            ESLINT_OUTPUT: "reports/junit/eslint-results.xml"
 
       - store_test_results:
           path: reports/junit
