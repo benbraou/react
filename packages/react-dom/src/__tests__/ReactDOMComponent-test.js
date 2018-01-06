@@ -33,7 +33,7 @@ describe('ReactDOMComponent', () => {
       ReactDOM.render(<div style={{}} />, container);
 
       ReactDOM.render(<div className={'foo'} />, container);
-      expect(container.firstChild.className).toEqual('foo');
+      expect(container.firstChild.className).toEqual('fooa');
       ReactDOM.render(<div className={'bar'} />, container);
       expect(container.firstChild.className).toEqual('bar');
       ReactDOM.render(<div className={null} />, container);
