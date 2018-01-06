@@ -2,7 +2,7 @@
 
 set -e
 
-yarn test --coverage --runInBand --testResultsProcessor=jest-junit
+yarn test --coverage --runInBand --testResultsProcessor=${JEST_PROCESSOR}
 if [ -z $CI_PULL_REQUEST ]; then
   cat ./coverage/lcov.info | ./node_modules/.bin/coveralls
 fi

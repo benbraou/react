@@ -36,6 +36,7 @@ jobs:
           command: ./scripts/circleci/test_entry_point.sh
           environment:
             JEST_JUNIT_OUTPUT: "reports/junit/jest-results.xml"
+            JEST_PROCESSOR: "jest-junit"
 
       - store_test_results:
           path: reports/junit
