@@ -8,17 +8,23 @@
 'use strict';
 
 const fs = require('fs');
+const {exec} = require('child_process');
+
 const minimatch = require('minimatch');
 const CLIEngine = require('eslint').CLIEngine;
 const listChangedFiles = require('../shared/listChangedFiles');
 const {es5Paths, esNextPaths} = require('../shared/pathsByLanguageVersion');
-const {getFormatterConfig, createDirectoriesIfMissing} = require('./eslint.utils');
+const {
+  getFormatterConfig,
+  createDirectoriesIfMissing,
+} = require('./eslint.utils');
 
 const allPaths = ['**/*.js'];
 
 let changedFiles = null;
 
 const formatterConfig = getFormatterConfig();
+const eslintTemporaryFiles = [];
 
 function runESLintOnFilesWithOptions(filePatterns, onlyChanged, options) {
   const cli = new CLIEngine(options);
@@ -70,6 +76,12 @@ function intersect(files, patterns) {
   return [...new Set(intersection)];
 }
 
+function getFileNameWithIndex(fileName, index) {
+  let splitted = fileName.split('.');
+  splitted.splice(1, 0, index, '.');
+  return splitted.join('');
+}
+
 /**
  * Based on the formatter configuration, log the output in console and write it to a file if
  * required.
@@ -86,16 +98,52 @@ function intersect(files, patterns) {
  * (ex: `junit`)
  *
  * @param {String} output Eslint output result
+ * @param {index} number unique number identifying the eslint run
  */
-function handleEslintOutput(output) {
+function handleEslintOutput(output, index) {
   // Whether we store lint results in a file or not, we also log the results in the console
   console.log(output);
   if (!formatterConfig.outputFile) {
     return;
   }
-  console.log(`Writing lint results to: ${formatterConfig.outputFile}`);
+  const fileName = getFileNameWithIndex(formatterConfig.outputFile, index);
+  console.log(`Writing lint results to: ${fileName}`);
   createDirectoriesIfMissing(formatterConfig.outputFile);
-  fs.writeFileSync(formatterConfig.outputFile, output, 'utf8');
+  fs.writeFileSync(fileName, output, 'utf8');
+  eslintTemporaryFiles.push(fileName);
+}
+
+/**
+ *
+ * @param {number} nbrOfRuns The number of ESLint runs that corresponds also to the number of
+ * generated files
+ */
+function mergeOutputResults(nbrOfRuns) {
+  // If we are not in the mode of outputting files, merging is not applicable.
+  if (!formatterConfig.outputFile) {
+    return;
+  }
+
+  exec(
+    `junit-merge ${eslintTemporaryFiles.join(' ')} --out ${
+      formatterConfig.outputFile
+    } `,
+    {cwd: __dirname},
+    (error, stdout, stderr) => {
+      if (error) {
+        console.error(error);
+        process.exit(1);
+      } else {
+        console.log('remove temporary files');
+      }
+    }
+  );
+
+  Array(nbrOfRuns)
+    .fill()
+    .map((_, i) => `${formatterConfig.outputFile}${i}`);
+
+  // fs.writeFileSync(formatterConfig.outputFile , merged, 'utf8');
 }
 
 function runESLint({onlyChanged}) {
@@ -106,6 +154,7 @@ function runESLint({onlyChanged}) {
   let errorCount = 0;
   let warningCount = 0;
   let output = '';
+
   [
     runESLintOnFilesWithOptions(allPaths, onlyChanged, {
       configFile: `${__dirname}/eslintrc.default.js`,
@@ -117,12 +166,16 @@ function runESLint({onlyChanged}) {
     runESLintOnFilesWithOptions(es5Paths, onlyChanged, {
       configFile: `${__dirname}/eslintrc.es5.js`,
     }),
-  ].forEach(result => {
+  ].forEach((result, index) => {
     errorCount += result.errorCount;
     warningCount += result.warningCount;
     output += result.output;
+    // we create a JUnit file per run and then we merge them into one using npm install junit-merge.
+    // Otherwise, naively creating one file that contains the concatenated xml results will not be
+    // parsed by circleci
+    handleEslintOutput(output, index);
   });
-  handleEslintOutput(output);
+  // mergeOutputResults();
   return errorCount === 0 && warningCount === 0;
 }
 
