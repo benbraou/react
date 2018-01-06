@@ -7,8 +7,9 @@
 
 'use strict';
 
+const {execSync} = require('child_process');
 const fs = require('fs');
-const {exec} = require('child_process');
+
 
 const minimatch = require('minimatch');
 const CLIEngine = require('eslint').CLIEngine;
@@ -112,20 +113,32 @@ function handleEslintOutput(output, index) {
 }
 
 /**
- *
+ * Nice to have. circle ci seems to group eslint results even coming from different files.
+ * Let's have one file any way
  * @param {number} nbrOfRuns The number of ESLint runs that corresponds also to the number of
  * generated files
  */
-function mergeOutputResults(nbrOfRuns) {
+function mergeOutputResults() {
   // If we are not in the mode of outputting files, merging is not applicable.
   if (!formatterConfig.outputFile) {
     return;
   }
-
+  // TODO NOT READY FOR COMMIT YET
+  try {
+    execSync(`junit-merge ${eslintTemporaryFiles.join(' ')} --out ${formatterConfig.outputFile}`);
+  } catch (e) {
+    throw new Error('could not merge eslint repots');
+  }
+  eslintTemporaryFiles.forEach(file => {
+    try {
+      fs.unlinkSync(file);
+    } catch (e) {
+      console.log(`Could not delete file: ${file}`);
+    }
+  });
+  /*
   exec(
-    `junit-merge ${eslintTemporaryFiles.join(' ')} --out ${
-      formatterConfig.outputFile
-    } `,
+    `junit-merge ${eslintTemporaryFiles.join(' ')} --out ${formatterConfig.outputFile}`,
     {cwd: __dirname},
     (error, stdout, stderr) => {
       if (error) {
@@ -135,11 +148,7 @@ function mergeOutputResults(nbrOfRuns) {
         console.log('remove temporary files');
       }
     }
-  );
-
-  Array(nbrOfRuns)
-    .fill()
-    .map((_, i) => `${formatterConfig.outputFile}${i}`);
+  );*/
 
   // fs.writeFileSync(formatterConfig.outputFile , merged, 'utf8');
 }
@@ -175,6 +184,7 @@ function runESLint({onlyChanged}) {
   });
   // Whether we store lint results in a file or not, we also log the results in the console
   console.log(output);
+  mergeOutputResults();
   return errorCount === 0 && warningCount === 0;
 }
 
