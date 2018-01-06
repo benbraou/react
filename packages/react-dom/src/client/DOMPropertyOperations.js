@@ -33,8 +33,8 @@ export function getValueForProperty(
     if (propertyInfo.mustUseProperty) {
       const {propertyName} = propertyInfo;
       return (node: any)[propertyName];
-    } else {
-      const attributeName = propertyInfo.attributeName;
+    } else{
+      const attributeName=propertyInfo.attributeName
 
       let stringValue = null;
 
