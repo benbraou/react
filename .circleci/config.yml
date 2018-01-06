@@ -34,6 +34,14 @@ jobs:
       - run:
           name: Test Packages
           command: ./scripts/circleci/test_entry_point.sh
+          environment:
+            JEST_JUNIT_OUTPUT: "reports/junit/jest-results.xml"
+
+      - store_test_results:
+          path: reports/junit
+
+      - store_artifacts:
+          path: reports/junit
 
       - save_cache:
           name: Save node_modules cache
