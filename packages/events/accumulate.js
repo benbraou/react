@@ -9,6 +9,11 @@
 
 import invariant from 'fbjs/lib/invariant';
 
+function foo(x) {
+  return x * x;
+}
+foo('2');
+
 /**
  * Accumulates items that must not be null or undefined.
  *

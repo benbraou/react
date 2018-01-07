@@ -10,7 +10,6 @@
 const {execSync} = require('child_process');
 const fs = require('fs');
 
-
 const minimatch = require('minimatch');
 const CLIEngine = require('eslint').CLIEngine;
 const listChangedFiles = require('../shared/listChangedFiles');
