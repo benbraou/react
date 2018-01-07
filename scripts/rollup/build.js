@@ -24,10 +24,15 @@ const {asyncCopyTo, asyncRimRaf} = require('./utils');
 const codeFrame = require('babel-code-frame');
 const Wrappers = require('./wrappers');
 
+const {isJUnitEnabled, writeJunitReport} = require('../shared/reporting');
+
 // Errors in promises should be fatal.
 let loggedErrors = new Set();
 process.on('unhandledRejection', err => {
   if (loggedErrors.has(err)) {
+    if (isJUnitEnabled()) {
+      writeJunitReport('build', err, false);
+    }
     // No need to print it twice.
     process.exit(1);
   }
@@ -400,6 +405,9 @@ async function createBundle(bundle, bundleType) {
 function handleRollupWarning(warning) {
   if (warning.code === 'UNRESOLVED_IMPORT') {
     console.error(warning.message);
+    if (isJUnitEnabled()) {
+      writeJunitReport('build', warning.message, false);
+    }
     process.exit(1);
   }
   if (warning.code === 'UNUSED_EXTERNAL_IMPORT') {

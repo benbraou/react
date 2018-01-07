@@ -11,14 +11,20 @@ const minimatch = require('minimatch');
 const CLIEngine = require('eslint').CLIEngine;
 const listChangedFiles = require('../shared/listChangedFiles');
 const {es5Paths, esNextPaths} = require('../shared/pathsByLanguageVersion');
-
-const allPaths = ['**/*.js'];
+const {
+  isJUnitEnabled,
+  writePartialJunitReport,
+  mergePartialJunitReports,
+} = require('../shared/reporting');
 
 let changedFiles = null;
 
+const allPaths = ['**/*.js'];
+
 function runESLintOnFilesWithOptions(filePatterns, onlyChanged, options) {
   const cli = new CLIEngine(options);
-  const formatter = cli.getFormatter();
+  // stylish is the default ESLint formatter. We switch to JUnit formatter in the scope of circleci
+  const formatter = cli.getFormatter(isJUnitEnabled() ? 'junit' : 'stylish');
 
   if (onlyChanged && changedFiles === null) {
     // Calculate lazily.
@@ -65,6 +71,8 @@ function runESLint({onlyChanged}) {
   if (typeof onlyChanged !== 'boolean') {
     throw new Error('Pass options.onlyChanged as a boolean.');
   }
+  const mutableESLintTemporaryFiles = [];
+
   let errorCount = 0;
   let warningCount = 0;
   let output = '';
@@ -79,12 +87,26 @@ function runESLint({onlyChanged}) {
     runESLintOnFilesWithOptions(es5Paths, onlyChanged, {
       configFile: `${__dirname}/eslintrc.es5.js`,
     }),
-  ].forEach(result => {
+  ].forEach((result, index) => {
     errorCount += result.errorCount;
     warningCount += result.warningCount;
     output += result.output;
+
+    if (isJUnitEnabled()) {
+      // we create a JUnit file per run and then we merge them into one using junit-merge.
+      writePartialJunitReport(
+        'eslint',
+        result.output,
+        index,
+        mutableESLintTemporaryFiles
+      );
+    }
   });
+  // Whether we store lint results in a file or not, we also log the results in the console
   console.log(output);
+  if (isJUnitEnabled()) {
+    mergePartialJunitReports('eslint', mutableESLintTemporaryFiles);
+  }
   return errorCount === 0 && warningCount === 0;
 }
 
