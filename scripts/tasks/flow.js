@@ -9,18 +9,44 @@
 
 const path = require('path');
 const spawn = require('child_process').spawn;
+const chalk = require('chalk');
+
+const {isJunitEnabled, writeJunitReport} = require('../shared/reporting');
 
 const extension = process.platform === 'win32' ? '.cmd' : '';
+const spawnOptions = isJunitEnabled() ? {} : {stdio: 'inherit'};
 
-spawn(path.join('node_modules', '.bin', 'flow' + extension), ['check', '.'], {
-  // Allow colors to pass through
-  stdio: 'inherit',
-}).on('close', function(code) {
+let createReport = () => {};
+let reportChunks = [];
+
+const flow = spawn(
+  path.join('node_modules', '.bin', 'flow' + extension),
+  ['check', '.'],
+  spawnOptions
+);
+
+flow.on('close', function(code) {
   if (code !== 0) {
-    console.error('Flow failed');
+    console.error(chalk.red.bold('Flow failed'));
+    createReport(false);
   } else {
-    console.log('Flow passed');
+    console.log(chalk.green.bold('Flow passed'));
+    createReport(true);
   }
-
+  if (reportChunks.length > 0) {
+    let reportJSON = reportChunks.join('');
+    console.log(reportJSON);
+  }
   process.exit(code);
 });
+
+if (isJunitEnabled()) {
+  flow.stdout.on('data', data => {
+    createReport = stepHasSucceeded => {
+      if (!stepHasSucceeded) {
+        reportChunks.push(data);
+      }
+      writeJunitReport('flow', data, stepHasSucceeded);
+    };
+  });
+}
