@@ -10,6 +10,7 @@ const path = require('path');
 const fs = require('fs');
 const mkdirp = require('mkdirp');
 const chalk = require('chalk');
+const builder = require('junit-report-builder');
 
 /**
  * Returns whether JUnit report generation mode is enabled. The activation is done through circleci
@@ -40,41 +41,6 @@ const writeContent = (fileNamePrefix, content) => {
 };
 
 /**
- * Builds the output that will be written in the XML JUnit report
- *
- * @param {string} data
- * @param {string} packageName
- * @param {boolean} hasPassed
- * @returns {string} The output that will be written in the JUnit report
- */
-const buildXMLOutputAsSingleTest = (data, packageName, hasPassed) => {
-  const nbrErrors = hasPassed ? 0 : 1;
-  const detailedMessage = hasPassed
-    ? ''
-    : `
-      <failure message=""><![CDATA[
-${data}
-      ]]>
-      </failure>
-  `;
-
-  const testSuite = `
-    <testsuite package="${packageName}" time="0" tests="1" errors="${
-    nbrErrors
-  }" name="${packageName.toUpperCase()}">
-      <testcase time="0" name="${packageName} merged report">
-${detailedMessage}
-      </testcase>
-    </testsuite>
-  `;
-  return `<?xml version="1.0"?>
-  <testsuites>
-    ${testSuite}
-  </testsuites>
-  `;
-};
-
-/**
  * Writes a JUnit report for a given build step
  *
  * @param {string} buildStep The build step name
@@ -84,9 +50,15 @@ ${detailedMessage}
 const writeJUnitReport = (buildStep, data, stepHasSucceeded) => {
   const reportPath = reportFilePath(buildStep);
   console.log(chalk.gray(`Starting to write the report in ${reportPath}`));
-  const xmlOutput = buildXMLOutputAsSingleTest(data, buildStep, stepHasSucceeded);
-  mkdirp.sync(path.dirname(reportPath));
-  fs.writeFileSync(reportPath, xmlOutput, 'utf8');
+  const suite = builder.testSuite().name(buildStep);
+  const testCase = suite
+    .testCase()
+    .className(buildStep)
+    .name('single-test');
+  if (!stepHasSucceeded) {
+    testCase.failure(data);
+  }
+  builder.writeTo(reportPath);
   console.log(
     chalk.gray(
       `Finished writing the report in ${reportPath} for the build step ${
@@ -98,8 +70,6 @@ const writeJUnitReport = (buildStep, data, stepHasSucceeded) => {
 
 module.exports = {
   isJUnitEnabled,
-  reportFilePath,
   writeJUnitReport,
-  buildXMLOutputAsSingleTest,
   writeContent,
 };
