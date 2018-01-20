@@ -7,7 +7,7 @@
 
 'use strict';
 
-const {isJUnitEnabled, writeJunitReport} = require('../shared/reporting');
+const {isJUnitEnabled, writeJUnitReport} = require('../shared/reporting');
 
 const reactVersion = require('../../package.json').version;
 const versions = {
@@ -41,7 +41,7 @@ Object.keys(versions).forEach(function(name) {
 
 if (!allVersionsMatch) {
   if (isJUnitEnabled()) {
-    writeJunitReport('version-check', errorMessages.join('\n'), false);
+    writeJUnitReport('version-check', errorMessages.join('\n'), false);
   }
   process.exit(1);
 }

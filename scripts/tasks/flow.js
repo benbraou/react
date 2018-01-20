@@ -11,7 +11,7 @@ const path = require('path');
 const spawn = require('child_process').spawn;
 const chalk = require('chalk');
 
-const {isJUnitEnabled, writeJunitReport} = require('../shared/reporting');
+const {isJUnitEnabled, writeJUnitReport} = require('../shared/reporting');
 
 const extension = process.platform === 'win32' ? '.cmd' : '';
 const spawnOptions = isJUnitEnabled() ? {} : {stdio: 'inherit'};
@@ -46,7 +46,7 @@ if (isJUnitEnabled()) {
       if (!stepHasSucceeded) {
         reportChunks.push(data);
       }
-      writeJunitReport('flow', data, stepHasSucceeded);
+      writeJUnitReport('flow', data, stepHasSucceeded);
     };
   });
 }

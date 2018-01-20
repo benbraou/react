@@ -11,11 +11,7 @@ const minimatch = require('minimatch');
 const CLIEngine = require('eslint').CLIEngine;
 const listChangedFiles = require('../shared/listChangedFiles');
 const {es5Paths, esNextPaths} = require('../shared/pathsByLanguageVersion');
-const {
-  isJUnitEnabled,
-  writePartialJunitReport,
-  mergePartialJunitReports,
-} = require('../shared/reporting');
+const {isJUnitEnabled, writeContent} = require('../shared/reporting');
 
 let changedFiles = null;
 
@@ -71,42 +67,33 @@ function runESLint({onlyChanged}) {
   if (typeof onlyChanged !== 'boolean') {
     throw new Error('Pass options.onlyChanged as a boolean.');
   }
-  const mutableESLintTemporaryFiles = [];
 
   let errorCount = 0;
   let warningCount = 0;
   let output = '';
-  [
+  const eslintrcList = ['eslintrc.default', 'eslintrc.esnext', 'eslintrc.es5'];
+  const esLintRuns = [
     runESLintOnFilesWithOptions(allPaths, onlyChanged, {
-      configFile: `${__dirname}/eslintrc.default.js`,
+      configFile: `${__dirname}/${eslintrcList[0]}.js`,
       ignorePattern: [...es5Paths, ...esNextPaths],
     }),
     runESLintOnFilesWithOptions(esNextPaths, onlyChanged, {
-      configFile: `${__dirname}/eslintrc.esnext.js`,
+      configFile: `${__dirname}/${eslintrcList[1]}.js`,
     }),
     runESLintOnFilesWithOptions(es5Paths, onlyChanged, {
-      configFile: `${__dirname}/eslintrc.es5.js`,
+      configFile: `${__dirname}/${eslintrcList[2]}.js`,
     }),
-  ].forEach((result, index) => {
+  ];
+  esLintRuns.forEach((result, index) => {
     errorCount += result.errorCount;
     warningCount += result.warningCount;
     output += result.output;
-
     if (isJUnitEnabled()) {
-      // we create a JUnit file per run and then we merge them into one using junit-merge.
-      writePartialJunitReport(
-        'eslint',
-        result.output,
-        index,
-        mutableESLintTemporaryFiles
-      );
+      writeContent(eslintrcList[index], result.output);
     }
   });
   // Whether we store lint results in a file or not, we also log the results in the console
   console.log(output);
-  if (isJUnitEnabled()) {
-    mergePartialJunitReports('eslint', mutableESLintTemporaryFiles);
-  }
   return errorCount === 0 && warningCount === 0;
 }
 

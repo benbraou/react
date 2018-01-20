@@ -6,10 +6,7 @@
  */
 'use strict';
 
-const {
-  buildXMLOutputAsSingleTest,
-  getPartialJUnitReportFileName,
-} = require('../reporting');
+const {buildXMLOutputAsSingleTest} = require('../reporting');
 
 describe('junitReport', () => {
   describe('buildXMLOutputAsSingleTest', () => {
@@ -45,11 +42,5 @@ describe('junitReport', () => {
       </testsuites>`.replace(/\s+/g, '')
       );
     });
-  });
-});
-
-describe('getPartialJUnitReportFileName', () => {
-  it('should return a correct JUnit report file name provided a base name and an index', () => {
-    expect(getPartialJUnitReportFileName('base.xml', 2)).toBe('base2.xml');
   });
 });

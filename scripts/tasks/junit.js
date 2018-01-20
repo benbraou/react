@@ -7,10 +7,10 @@
 
 'use strict';
 
-const {isJUnitEnabled, writeJunitReport} = require('../shared/reporting');
+const {isJUnitEnabled, writeJUnitReport} = require('../shared/reporting');
 
 if (!isJUnitEnabled() | (process.argv.length !== 5)) {
   return;
 }
 
-writeJunitReport(process.argv[2], process.argv[3], process.argv[4] === 'true');
+writeJUnitReport(process.argv[2], process.argv[3], process.argv[4] === 'true');

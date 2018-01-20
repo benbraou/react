@@ -16,7 +16,7 @@ const fs = require('fs');
 const listChangedFiles = require('../shared/listChangedFiles');
 const prettierConfigPath = require.resolve('../../.prettierrc');
 
-const {isJUnitEnabled, writeJunitReport} = require('../shared/reporting');
+const {isJUnitEnabled, writeJUnitReport} = require('../shared/reporting');
 
 const mode = process.argv[2] || 'check';
 const shouldWrite = mode === 'write' || mode === 'write-changed';
@@ -32,7 +32,7 @@ const files = glob
 
 const writeReport = (data, hasSucceeded) => {
   if (isJUnitEnabled()) {
-    writeJunitReport('prettier', data, hasSucceeded);
+    writeJUnitReport('prettier', data, hasSucceeded);
   }
 };
 

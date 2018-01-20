@@ -13,7 +13,7 @@ const fs = require('fs');
 const path = require('path');
 const execFileSync = require('child_process').execFileSync;
 
-const {isJUnitEnabled, writeJunitReport} = require('../shared/reporting');
+const {isJUnitEnabled, writeJUnitReport} = require('../shared/reporting');
 
 let cwd = null;
 function exec(command, args) {
@@ -39,7 +39,7 @@ if (isCI) {
       'facts-tracker: Branch is not master, exiting...';
     console.error(masterBranchMessage);
     if (isJUnitEnabled()) {
-      writeJunitReport('track_stats', masterBranchMessage, true);
+      writeJUnitReport('track_stats', masterBranchMessage, true);
     }
     process.exit(0);
   }
@@ -49,7 +49,7 @@ if (isCI) {
       'facts-tracker: This is a pull request, exiting...';
     console.error(pullRequestMessage);
     if (isJUnitEnabled()) {
-      writeJunitReport('track_stats', pullRequestMessage, true);
+      writeJUnitReport('track_stats', pullRequestMessage, true);
     }
     process.exit(0);
   }
@@ -78,7 +78,7 @@ if (isCI) {
       'Travis and it should work :)';
     console.error(githubMessage);
     if (isJUnitEnabled()) {
-      writeJunitReport('track_stats', githubMessage, false);
+      writeJUnitReport('track_stats', githubMessage, false);
     }
     process.exit(1);
   }
@@ -102,7 +102,7 @@ if (process.argv.length <= 2) {
     'Usage: facts-tracker <name1> <value1> <name2> <value2>...';
   console.error(usageMessage);
   if (isJUnitEnabled()) {
-    writeJunitReport('track_stats', usageMessage, false);
+    writeJUnitReport('track_stats', usageMessage, false);
   }
   process.exit(1);
 }
@@ -122,7 +122,7 @@ function getRepoSlug() {
   const repoMessage = 'Cannot find repository slug, sorry.';
   console.error(repoMessage);
   if (isJUnitEnabled()) {
-    writeJunitReport('track_stats', repoMessage, false);
+    writeJUnitReport('track_stats', repoMessage, false);
   }
   process.exit(1);
 }
@@ -165,7 +165,7 @@ function checkoutFactsFolder() {
     const statusMessage = 'facts-tracker: `git status` is not clean, aborting.';
     console.error(statusMessage);
     if (isJUnitEnabled()) {
-      writeJunitReport('track_stats', statusMessage, false);
+      writeJUnitReport('track_stats', statusMessage, false);
     }
     process.exit(1);
   }
@@ -216,7 +216,7 @@ if (exec('git', ['status', '--porcelain'])) {
   const nothingToUpdateMessage = 'facts-tracker: nothing to update';
   console.error(nothingToUpdateMessage);
   if (isJUnitEnabled()) {
-    writeJunitReport('track_stats', nothingToUpdateMessage, true);
+    writeJUnitReport('track_stats', nothingToUpdateMessage, true);
   }
 }
 cwd = null;
